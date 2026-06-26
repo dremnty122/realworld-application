@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bantay Bayan - Corruption Report App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #0a2351;
+    background-image: linear-gradient(180deg, #0a2351 0%, #123b7a 100%);
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #cdd9ef;
+    margin-bottom: 30px;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 5px;
+    color: #1c2b39;
+  }
+
+  select, input[type="text"], textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  textarea {
+    resize: vertical;
+    height: 70px;
+  }
+
+  button {
+    margin-top: 18px;
+    background-color: #c0392b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #a93226;
+  }
+
+  .checkbox-row {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+  }
+
+  .stats div h2 {
+    margin: 0;
+    color: #c0392b;
+  }
+
+  .stats div p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+  }
+
+  .report {
+    border-left: 5px solid #c0392b;
+    background: #fafafa;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+
+  .report .top-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #777;
+  }
+
+  .report h3 {
+    margin: 5px 0;
+    font-size: 16px;
+  }
+
+  .badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+  }
+
+  .badge.Filed { background-color: #c8960c; }
+  .badge.Reviewing { background-color: #2980b9; }
+  .badge.Resolved { background-color: #27ae60; }
+
+</style>
+</head>
+<body>
+
+<h1>🔦Bantay Bayan</h1>
+<p class="subtitle">Sumbungan ng Bayan Laban sa Katiwalian!!!!</p>
+
+<div class="container">
+
+  <div class="card stats">
+    <div>
+      <h2 id="totalCount">0</h2>
+      <p>Total Reports</p>
+    </div>
+    <div>
+      <h2 id="resolvedCount">0</h2>
+      <p>Resolved</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>File a Report</h2>
+
+    <label>Category</label>
+    <select id="category">
+      <option>Bribery</option>
+      <option>Ghost Project</option>
+      <option>Misuse of Funds</option>
+      <option>Abuse of Power</option>
+      <option>Nepotism</option>
+      <option>Other</option>
+    </select>
+
+    <label>Office / Agency</label>
+    <input type="text" id="agency" placeholder="e.g. Barangay Hall">
+
+    <label>Description</label>
+    <textarea id="desc" placeholder="What happened?"></textarea>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="anon" checked>
+      <label style="display:inline;">Submit anonymously</label>
+    </div>
+
+    <button onclick="submitReport()">Submit Report</button>
+  </div>
+
+  <div class="card">
+    <h2>Report List</h2>
+    <div id="reportList"></div>
+  </div>
+
+</div>
+
+<script>
+  let reports = [
+    {category: "Ghost Project", agency: "Barangay Hall", desc: "Drainage project marked done but nothing was built.", status: "Reviewing"},
+    {category: "Bribery", agency: "City Engineering Office", desc: "Permit only approved after extra 'fee' was asked.", status: "Resolved"}
+  ];
+
+  function render() {
+    const list = document.getElementById("reportList");
+    list.innerHTML = "";
+
+    reports.forEach(r => {
+      list.innerHTML += `
+        <div class="report">
+          <div class="top-row">
+            <span>${r.agency}</span>
+            <span class="badge ${r.status}">${r.status}</span>
+          </div>
+          <h3>${r.category}</h3>
+          <p>${r.desc}</p>
+        </div>
+      `;
+    });
+
+    document.getElementById("totalCount").textContent = reports.length;
+    document.getElementById("resolvedCount").textContent =
+      reports.filter(r => r.status === "Resolved").length;
+  }
+
+  function submitReport() {
+    const category = document.getElementById("category").value;
+    const agency = document.getElementById("agency").value || "Not specified";
+    const desc = document.getElementById("desc").value;
+
+    if (desc.trim() === "") {
+      alert("Please describe what happened.");
+      return;
+    }
+
+    reports.push({category: category, agency: agency, desc: desc, status: "Filed"});
+
+    document.getElementById("agency").value = "";
+    document.getElementById("desc").value = "";
+
+    render();
+  }
+
+  render();
+</script>
+
+</body>
+</html>
