@@ -34,6 +34,12 @@
     padding: 20px 25px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     margin-bottom: 25px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
   }
 
   label {
@@ -66,10 +72,16 @@
     border-radius: 5px;
     font-size: 15px;
     cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
   }
 
   button:hover {
     background-color: #a93226;
+    transform: scale(1.04);
+  }
+
+  button:active {
+    transform: scale(0.96);
   }
 
   .checkbox-row {
@@ -86,6 +98,11 @@
   .stats div h2 {
     margin: 0;
     color: #c0392b;
+    transition: transform 0.25s ease;
+  }
+
+  .stats div h2.bump {
+    transform: scale(1.3);
   }
 
   .stats div p {
@@ -100,6 +117,29 @@
     padding: 10px 15px;
     margin-bottom: 10px;
     border-radius: 5px;
+    animation: slideIn 0.4s ease;
+    transition: transform 0.15s ease;
+  }
+
+  .report:hover {
+    transform: translateX(4px);
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(200,150,12,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(200,150,12,0); }
+    100% { box-shadow: 0 0 0 0 rgba(200,150,12,0); }
   }
 
   .report .top-row {
@@ -120,18 +160,58 @@
     font-size: 12px;
     font-weight: bold;
     color: white;
+    transition: background-color 0.3s ease;
   }
 
-  .badge.Filed { background-color: #c8960c; }
+  .badge.Filed { background-color: #c8960c; animation: pulse 1.6s infinite; }
   .badge.Reviewing { background-color: #2980b9; }
   .badge.Resolved { background-color: #27ae60; }
+
+  .filters {
+    margin-bottom: 15px;
+  }
+
+  .filter-btn {
+    background: #eaeef5;
+    color: #1c2b39;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 15px;
+    font-size: 13px;
+    margin-right: 8px;
+    margin-top: 0;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  .filter-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .filter-btn.active {
+    background-color: #0a2351;
+    color: white;
+  }
+
+  .report .case-id {
+    font-weight: bold;
+    color: #0a2351;
+  }
+
+  .status-select {
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-top: 0;
+  }
 
 </style>
 </head>
 <body>
 
-<h1>🔦Bantay Bayan</h1>
-<p class="subtitle">Sumbungan ng Bayan Laban sa Katiwalian!!!!</p>
+<h1>🔦 Bantay Bayan</h1>
+<p class="subtitle">A simple app for reporting corruption and bad governance</p>
 
 <div class="container">
 
@@ -139,6 +219,10 @@
     <div>
       <h2 id="totalCount">0</h2>
       <p>Total Reports</p>
+    </div>
+    <div>
+      <h2 id="reviewingCount">0</h2>
+      <p>Reviewing</p>
     </div>
     <div>
       <h2 id="resolvedCount">0</h2>
@@ -175,6 +259,12 @@
 
   <div class="card">
     <h2>Report List</h2>
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-filter="All" onclick="setFilter('All')">All</button>
+      <button class="filter-btn" data-filter="Filed" onclick="setFilter('Filed')">Filed</button>
+      <button class="filter-btn" data-filter="Reviewing" onclick="setFilter('Reviewing')">Reviewing</button>
+      <button class="filter-btn" data-filter="Resolved" onclick="setFilter('Resolved')">Resolved</button>
+    </div>
     <div id="reportList"></div>
   </div>
 
@@ -182,30 +272,72 @@
 
 <script>
   let reports = [
-    {category: "Ghost Project", agency: "Barangay Hall", desc: "Drainage project marked done but nothing was built.", status: "Reviewing"},
-    {category: "Bribery", agency: "City Engineering Office", desc: "Permit only approved after extra 'fee' was asked.", status: "Resolved"}
+    {id: "CASE-001", category: "Ghost Project", agency: "Barangay Hall", desc: "Drainage project marked done but nothing was built.", status: "Reviewing", date: "2026-05-10"},
+    {id: "CASE-002", category: "Bribery", agency: "City Engineering Office", desc: "Permit only approved after extra 'fee' was asked.", status: "Resolved", date: "2026-04-22"}
   ];
+
+  let caseNumber = reports.length;
+  let currentFilter = "All";
 
   function render() {
     const list = document.getElementById("reportList");
     list.innerHTML = "";
 
-    reports.forEach(r => {
+    const visibleReports = currentFilter === "All"
+      ? reports
+      : reports.filter(r => r.status === currentFilter);
+
+    if (visibleReports.length === 0) {
+      list.innerHTML = `<p style="color:#888; font-size:14px;">No reports under "${currentFilter}".</p>`;
+    }
+
+    visibleReports.slice().reverse().forEach(r => {
       list.innerHTML += `
         <div class="report">
           <div class="top-row">
-            <span>${r.agency}</span>
+            <span class="case-id">${r.id}</span>
+            <span>${r.date}</span>
+          </div>
+          <h3>${r.category} — ${r.agency}</h3>
+          <p>${r.desc}</p>
+          <div class="top-row">
+            <select class="status-select" onchange="updateStatus('${r.id}', this.value)">
+              <option ${r.status === "Filed" ? "selected" : ""}>Filed</option>
+              <option ${r.status === "Reviewing" ? "selected" : ""}>Reviewing</option>
+              <option ${r.status === "Resolved" ? "selected" : ""}>Resolved</option>
+            </select>
             <span class="badge ${r.status}">${r.status}</span>
           </div>
-          <h3>${r.category}</h3>
-          <p>${r.desc}</p>
         </div>
       `;
     });
 
     document.getElementById("totalCount").textContent = reports.length;
+    document.getElementById("reviewingCount").textContent =
+      reports.filter(r => r.status === "Reviewing").length;
     document.getElementById("resolvedCount").textContent =
       reports.filter(r => r.status === "Resolved").length;
+
+    document.querySelectorAll(".stats h2").forEach(el => {
+      el.classList.remove("bump");
+      void el.offsetWidth;
+      el.classList.add("bump");
+      setTimeout(() => el.classList.remove("bump"), 250);
+    });
+  }
+
+  function setFilter(status) {
+    currentFilter = status;
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.filter === status);
+    });
+    render();
+  }
+
+  function updateStatus(id, newStatus) {
+    const r = reports.find(r => r.id === id);
+    if (r) r.status = newStatus;
+    render();
   }
 
   function submitReport() {
@@ -218,12 +350,17 @@
       return;
     }
 
-    reports.push({category: category, agency: agency, desc: desc, status: "Filed"});
+    caseNumber++;
+    const newId = "CASE-" + String(caseNumber).padStart(3, "0");
+    const today = new Date().toISOString().split("T")[0];
+
+    reports.push({id: newId, category: category, agency: agency, desc: desc, status: "Filed", date: today});
 
     document.getElementById("agency").value = "";
     document.getElementById("desc").value = "";
 
-    render();
+    currentFilter = "All";
+    setFilter("All");
   }
 
   render();
